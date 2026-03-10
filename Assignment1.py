@@ -6,7 +6,8 @@ from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad,unpad
 
 is_on = True
-# Main program loop
+
+#Main program loop
 while is_on:
     print("1.Register 2.Store 3.Read 4.Tamper 5.DeleteUser 6.Exit")
     choice = int(input("choice:"))
