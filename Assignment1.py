@@ -124,7 +124,19 @@ while is_on:
 
 
     elif choice == 4:
-        pass
+        username = input("username:")
+        with open("vault.json", "r") as f:
+            data = json.load(f)
+
+        cipherText = base64.b64decode(data[username]["cipher"])
+        tampered = bytearray(cipherText)
+        tampered[0] = tampered[0]^1
+        data[username]["cipher"] = base64.b64encode(tampered).decode()
+
+        with open("vault.json", "w") as f:
+            json.dump(data, f)
+
+        print("CipherText modified (tampered).")
 
     elif choice == 5:
         pass
