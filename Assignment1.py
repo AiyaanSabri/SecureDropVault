@@ -9,7 +9,7 @@ is_on = True
 
 #Main program loop
 while is_on:
-    print("1.Register 2.Store 3.Read 4.Tamper 5.DeleteUser 6.Exit")
+    print("\n1.Register 2.Store 3.Read 4.Tamper 5.DeleteUser 6.Exit")
     choice = int(input("choice:"))
 
     # --- Option 1: Register a new user ---
@@ -22,7 +22,7 @@ while is_on:
         Salt = os.urandom(16)
         SaltR =base64.b64encode(Salt).decode()
 
-        print("[debug info]:")
+        print("\n[DEBUG INFO]:")
         print(f"generateSalt: {SaltR}")
         print("User registered.")
 
@@ -44,83 +44,90 @@ while is_on:
     # --- Option 2: Store an encrypted note ---
     elif choice == 2:
         usernameC = input("username:")
-        passC = input("password:")
-        note = input("note:")
 
         # Load user data and retrieve salt and hash mode
         with open("vault.json", "r") as f:
             data = json.load(f)
+        if usernameC not in data:
+            print("User not found.")
+        else:
+            passC = input("password:")
+            note = input("note:")
             saltC = base64.b64decode(data[usernameC]["salt"])
             hashC = data[usernameC]["hash"]
 
-        # Derive a 32-byte encryption key from salt + password
-        combined = saltC + passC.encode()
+            # Derive a 32-byte encryption key from salt + password
+            combined = saltC + passC.encode()
 
-        if hashC == "SHA256":
-            key = hashlib.sha256(combined).digest()
-        else:
-            part1 = hashlib.md5(combined).digest()
-            part2 = hashlib.md5(combined+part1).digest()
-            key = part1 + part2
+            if hashC == "SHA256":
+                key = hashlib.sha256(combined).digest()
+            else:
+                part1 = hashlib.md5(combined).digest()
+                part2 = hashlib.md5(combined+part1).digest()
+                key = part1 + part2
 
-        # Generate random 16-byte IV for AES encryption
-        IV = os.urandom(16)
+            # Generate random 16-byte IV for AES encryption
+            IV = os.urandom(16)
 
-        # Encrypt the note using AES-256 in CBC mode
-        cipher = AES.new(key, AES.MODE_CBC, IV)
-        cipherText = cipher.encrypt(pad(note.encode(), AES.block_size))
+            # Encrypt the note using AES-256 in CBC mode
+            cipher = AES.new(key, AES.MODE_CBC, IV)
+            cipherText = cipher.encrypt(pad(note.encode(), AES.block_size))
 
-        # Compute integrity hash to detect tampering later
-        integrity = hashlib.sha256(IV + cipherText).hexdigest()
+            # Compute integrity hash to detect tampering later
+            integrity = hashlib.sha256(IV + cipherText).hexdigest()
 
-        # Convert IV and ciphertext to base64 strings for JSON storage
-        iv_str = base64.b64encode(IV).decode()
-        cipherText2 = base64.b64encode(cipherText).decode()
+            # Convert IV and ciphertext to base64 strings for JSON storage
+            iv_str = base64.b64encode(IV).decode()
+            cipherText2 = base64.b64encode(cipherText).decode()
 
-        # Save encrypted note data to vault
-        data[usernameC]["iv"] = iv_str
-        data[usernameC]["cipher"] = cipherText2
-        data[usernameC]["integrity"] = integrity
-        with open("vault.json", "w") as f:
-            json.dump(data, f)
+            # Save encrypted note data to vault
+            data[usernameC]["iv"] = iv_str
+            data[usernameC]["cipher"] = cipherText2
+            data[usernameC]["integrity"] = integrity
+            with open("vault.json", "w") as f:
+                json.dump(data, f)
 
-        print("[debug info]:")
-        print(f"derived key (first 16 bytes): {key[:16].hex()}")
-        print(f"IV: {iv_str}")
-        print(f"ciphertext: {cipherText2}")
-        print("Encrypted and Stored")
+            print("\n[DEBUG INFO]:")
+            print(f"derived key (first 16 bytes): {key[:16].hex()}")
+            print(f"IV: {iv_str}")
+            print(f"ciphertext: {cipherText2}")
+            print("Encrypted and Stored")
 
 
 
     elif choice == 3:
         username = input("username:")
-        password = input("password:")
 
         with open("vault.json", "r") as f:
             data = json.load(f)
+        if username not in data:
+            print("User not found.")
+        else:
+            password = input("password:")
+
             salt = base64.b64decode(data[username]["salt"])
             iv = base64.b64decode(data[username]["iv"])
             cipher = base64.b64decode(data[username]["cipher"])
             hashmode = data[username]["hash"]
             integrity = data[username]["integrity"]
 
-        combined = salt + password.encode()
+            combined = salt + password.encode()
 
-        if hashmode == "SHA256":
-            key = hashlib.sha256(combined).digest()
-        else:
-            part1 = hashlib.md5(combined).digest()
-            part2 = hashlib.md5(combined + part1).digest()
-            key = part1 + part2
+            if hashmode == "SHA256":
+                key = hashlib.sha256(combined).digest()
+            else:
+                part1 = hashlib.md5(combined).digest()
+                part2 = hashlib.md5(combined + part1).digest()
+                key = part1 + part2
 
-        integrity2 = hashlib.sha256(iv + cipher).hexdigest()
+            integrity2 = hashlib.sha256(iv + cipher).hexdigest()
 
-        if integrity != integrity2:
-            print("Tampering detected")
-        else:
-            decipher = AES.new(key, AES.MODE_CBC, iv)
-            plaintext = unpad(decipher.decrypt(cipher), AES.block_size).decode()
-            print(f"decrypted: {plaintext}")
+            if integrity != integrity2:
+                print("Tampering detected")
+            else:
+                decipher = AES.new(key, AES.MODE_CBC, iv)
+                plaintext = unpad(decipher.decrypt(cipher), AES.block_size).decode()
+                print(f"decrypted: {plaintext}")
 
 
     elif choice == 4:
@@ -128,15 +135,18 @@ while is_on:
         with open("vault.json", "r") as f:
             data = json.load(f)
 
-        cipherText = base64.b64decode(data[username]["cipher"])
-        tampered = bytearray(cipherText)
-        tampered[0] = tampered[0]^1
-        data[username]["cipher"] = base64.b64encode(tampered).decode()
+        if username not in data:
+            print("User not found.")
+        else:
+            cipherText = base64.b64decode(data[username]["cipher"])
+            tampered = bytearray(cipherText)
+            tampered[0] = tampered[0]^1
+            data[username]["cipher"] = base64.b64encode(tampered).decode()
 
-        with open("vault.json", "w") as f:
-            json.dump(data, f)
+            with open("vault.json", "w") as f:
+                json.dump(data, f)
 
-        print("CipherText modified (tampered).")
+            print("CipherText modified (tampered).")
 
     elif choice == 5:
         pass
