@@ -23,7 +23,7 @@ while is_on:
         SaltR =base64.b64encode(Salt).decode()
 
         print("\n[DEBUG INFO]:")
-        print(f"generateSalt: {SaltR}")
+        print(f"Generated Salt: {SaltR}")
         print("User registered.")
 
         # Load existing data or start with empty dictionary
@@ -88,7 +88,7 @@ while is_on:
                 json.dump(data, f)
 
             print("\n[DEBUG INFO]:")
-            print(f"derived key (first 16 bytes): {key[:16].hex()}")
+            print(f"Derived Key (first 16 bytes): {key[:16].hex()}")
             print(f"IV: {iv_str}")
             print(f"ciphertext: {cipherText2}")
             print("Encrypted and Stored")
@@ -127,7 +127,7 @@ while is_on:
             else:
                 decipher = AES.new(key, AES.MODE_CBC, iv)
                 plaintext = unpad(decipher.decrypt(cipher), AES.block_size).decode()
-                print(f"decrypted: {plaintext}")
+                print(f"Decrypted: {plaintext}")
 
 
     elif choice == 4:
